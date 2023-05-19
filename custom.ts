@@ -88,7 +88,7 @@ namespace airbit {
         yawDdiff = 0
         lastRollDiff = 0
         lastPitchDiff = 0
-      
+
         pitchPdiff = 0
         rollPdiff = 0
         pitchDdiff = 0
@@ -186,7 +186,7 @@ namespace airbit {
         */
 
 
-    
+
 
     /**
      * Calculate the drone's Roll, Pitch and Roll angles from raw data.
@@ -231,7 +231,7 @@ namespace airbit {
     //% group='Screen'
 
     export function rotateDot(xPos: number, yPos: number, radius: number, speed: number) {
-        led.plot(xPos + 0.5 + (radius+0.5) * Math.cos(input.runningTime() / 10000 * 6.283 * speed), yPos + 0.5 + (radius+0.5) * Math.sin(input.runningTime() / 10000 * 6.283 * speed))
+        led.plot(xPos + 0.5 + (radius + 0.5) * Math.cos(input.runningTime() / 10000 * 6.283 * speed), yPos + 0.5 + (radius + 0.5) * Math.sin(input.runningTime() / 10000 * 6.283 * speed))
     }
 
 
@@ -473,10 +473,10 @@ namespace airbit {
         mcReturnId = pins.i2cReadNumber(PCA_REG_SLAVEADR, NumberFormat.UInt8BE, false)
         basic.clearScreen()
         if (mcReturnId) {
-           // basic.showString("M")             Moved to main code, startup
+            // basic.showString("M")             Moved to main code, startup
             mcExists = true
         } else {
-           // basic.showString("No PCA!", 50)   Moved to main code, startup
+            // basic.showString("No PCA!", 50)   Moved to main code, startup
             mcExists = false
         }
     }
@@ -506,18 +506,29 @@ namespace airbit {
         gyroYcalibration = 0
         gyroZcalibration = 0
         basic.showString("C")
-        for (let index = 0; index < 100; index++) {
+        for (let index = 0; index < num_samples; index++) {
             IMU_sensorRead()
             gyroXcalibration += gyroX
             gyroYcalibration += gyroY
             gyroZcalibration += gyroZ
+
+            accXcalibration += accX
+            accYcalibration += accY
+            accZcalibration += accZ
+
             basic.pause(5)
+
         }
-        gyroXcalibration = gyroXcalibration / 100
-        gyroYcalibration = gyroYcalibration / 100
-        gyroZcalibration = gyroZcalibration / 100
-        accPitch = -57.295 * Math.atan2(accY, accZ)
-        accRoll = -57.295 * Math.atan2(accX, accZ)
+        gyroXcalibration = gyroXcalibration / num_samples
+        gyroYcalibration = gyroYcalibration / num_samples
+        gyroZcalibration = gyroZcalibration / num_samples
+
+        accXcalibration /= num_samples
+        accYcalibration /= num_samples
+        accZcalibration /= num_samples
+
+        accPitch = -57.295 * Math.atan2(accYcalibration, accZcalibration)
+        accRoll = -57.295 * Math.atan2(accXcalibration, accZcalibration)
         accPitchOffset = accPitch
         accRollOffset = accRoll
 
@@ -555,10 +566,10 @@ namespace airbit {
         let iRange = 5      //  Maximal error that will increase Roll and Pitch integral
         let iLimit = 4      //  Maximal correcton that can be added by integral
         let yawLimit = 50   //  Maximal yaw correction 
-       
+
         if (throttle > 50) {    // Prevent windup before flight
 
-            if (rollDiff > - iRange && rollDiff < iRange ){
+            if (rollDiff > - iRange && rollDiff < iRange) {
                 rollIdiff += rollDiff
             }
             if (pitchDiff > - iRange && pitchDiff < iRange) {
@@ -573,7 +584,7 @@ namespace airbit {
         rollIcorrection = Math.constrain(rollIcorrection, -iLimit, iLimit)     // Limit I (preventing it from growing out of proportions)
         pitchIcorrection = Math.constrain(pitchIcorrection, -iLimit, iLimit)
 
-     
+
         rollCorrection = rollDiff * rollPitchP + rollIcorrection + rollDdiff * rollPitchD
         pitchCorrection = pitchDiff * rollPitchP + pitchIcorrection + pitchDdiff * rollPitchD
         //yawCorrection = yawDiff * yawP 
@@ -634,7 +645,7 @@ namespace airbit {
      */
     //% block
 
-    
+
 
     export function PCA_ReadMode1() {
         pins.i2cWriteNumber(
@@ -647,7 +658,7 @@ namespace airbit {
     }
 
 
-   // let imuRoll = 0
+    // let imuRoll = 0
     let gyroReturnId = 0
     let mcReturnId = 0
     let calibratedRoll = 0
@@ -692,6 +703,9 @@ namespace airbit {
     let accZ = 0
     let accX = 0
     let accPitch = 0
+    let accXcalibration = 0
+    let accYcalibration = 0
+    let accZcalibration = 0
     //   let imuPitch = 0
     //   let imuRoll = 0
     let batteryLev = 0
@@ -742,9 +756,6 @@ namespace airbit {
     let radioGroup = 7
     let motorSpeed = -1
 
-
-
-
-
+    let num_samples = 1000
 }
 
